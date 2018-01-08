@@ -1,6 +1,8 @@
 import fetch from 'node-fetch'
 import * as _ from 'lodash'
+import * as T from './types'
 import * as bitfinex from './tickers/bitfinex'
+import * as bittrex from './tickers/bittrex'
 
 // const coinmarketcapExampleTicker = {
 //   id: 'raiden-network-token',
@@ -25,10 +27,11 @@ interface SpecificTicker {
   priceBTC?: number
 }
 
-type KeyedSpecificTickers = { [symbolId: string]: SpecificTicker }
+type KeyedSpecificTickers = T.NormalizedTickersKeyed
 
 type ExchangeTickers = {
-  bitfinex?: KeyedSpecificTickers
+  bitfinex?: T.NormalizedTickersKeyed
+  bittrex?: T.NormalizedTickersKeyed
 }
 
 interface DBTicker {
@@ -56,9 +59,11 @@ export async function updateTickers() {
   try {
     const cmcTickers = await getCMCTickers()
     const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
+    const bittrexTickers = await bittrex.getPreparedTickers()
 
     const combinedTickers = combineTickers(cmcTickers, {
       bitfinex: bitfinexTickers,
+      bittrex: bittrexTickers,
     })
 
     const res = await updateTickersWithOwnData(combinedTickers)
@@ -69,13 +74,22 @@ export async function updateTickers() {
 }
 
 function combineTickers(defaultTickers: DBTicker[], exchangeTickers: ExchangeTickers): DBTicker[] {
-  const { bitfinex } = exchangeTickers
+  const { bitfinex, bittrex } = exchangeTickers
   return _.map(defaultTickers, t => {
-    const exchangeTicker = bitfinex[t.id]
-    if (exchangeTicker) {
+    // todo: simplify this
+    const bitfinexTicker = bitfinex && bitfinex[t.id]
+    const bittrexTicker = bittrex && bittrex[t.id]
+    if (bitfinexTicker) {
       t.bitfinex = removeUndefinedValues({
-        priceBTC: exchangeTicker.priceBTC,
-        priceUSD: exchangeTicker.priceUSD,
+        priceBTC: bitfinexTicker.priceBTC,
+        priceUSD: bitfinexTicker.priceUSD,
+      })
+    }
+    if (bittrexTicker) {
+      t.bittrex = removeUndefinedValues({
+        priceBTC: bittrexTicker.priceBTC,
+        priceUSD: bittrexTicker.priceUSD,
+        priceETH: bittrexTicker.priceETH,
       })
     }
     return t

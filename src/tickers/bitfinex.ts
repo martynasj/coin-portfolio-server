@@ -1,5 +1,6 @@
 import fetch from 'node-fetch'
 import * as _ from 'lodash'
+import * as T from '../types'
 
 const url = 'https://api.bitfinex.com/v2'
 const availableSymbols = [
@@ -52,16 +53,9 @@ function makePairsFromSymbols(symbols: string[]): string[] {
 //   LOW
 // ]
 
-interface NormalizedBitfinexTicker {
-  symbolId: string // in our format
-  priceUSD: number
-  priceBTC?: number
-}
-
 type BitfinexTicker = Array<string|number>
-type BySymbolId = { [symbolId: string]: NormalizedBitfinexTicker }
 
-export async function getPreparedBitfinexTickers(): Promise<BySymbolId> {
+export async function getPreparedBitfinexTickers(): Promise<T.NormalizedTickersKeyed> {
   const bitfinexTickers = await fetchBitfinexTickers()
   const prepared = normalizeResponse(bitfinexTickers)
   const bySymbolId = _.keyBy(prepared, 'symbolId')
@@ -76,15 +70,15 @@ async function fetchBitfinexTickers(): Promise<BitfinexTicker[]> {
   return json
 }
 
-function normalizeResponse(bitfinexTickerArray: BitfinexTicker[]): NormalizedBitfinexTicker[] {
-  const result = []
+function normalizeResponse(bitfinexTickerArray: BitfinexTicker[]): T.NormalizedTicker[] {
+  const result: T.NormalizedTicker[] = []
   const btc = {}
 
   bitfinexTickerArray.forEach(t => {
     const normalized = normalizeTicker(t)
     if (normalized.priceBTC) {
       btc[normalized.symbolId] = normalized
-    } else {
+    } else if (normalized.priceUSD) {
       result.push(normalized)
     }
   })
@@ -97,7 +91,7 @@ function normalizeResponse(bitfinexTickerArray: BitfinexTicker[]): NormalizedBit
   })
 }
 
-function normalizeTicker(bitfinexTicker: Array<string|number>): NormalizedBitfinexTicker {
+function normalizeTicker(bitfinexTicker: Array<string|number>): T.NormalizedTicker {
   const symbol = bitfinexTicker[0] as string
   const lastPrice = bitfinexTicker[7] as number
 
@@ -113,5 +107,5 @@ function normalizeTicker(bitfinexTicker: Array<string|number>): NormalizedBitfin
     ticker.priceUSD = lastPrice
   }
 
-  return ticker as NormalizedBitfinexTicker
+  return ticker as T.NormalizedTicker
 }
