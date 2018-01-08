@@ -1,4 +1,6 @@
 import fetch from 'node-fetch'
+import * as _ from 'lodash'
+import * as bitfinex from './tickers/bitfinex'
 
 // const coinmarketcapExampleTicker = {
 //   id: 'raiden-network-token',
@@ -18,12 +20,27 @@ import fetch from 'node-fetch'
 //   last_updated: '1515354856',
 // }
 
-interface Ticker {
+interface SpecificTicker {
+  priceUSD?: number
+  priceBTC?: number
+}
+
+type KeyedSpecificTickers = { [symbolId: string]: SpecificTicker }
+
+type ExchangeTickers = {
+  bitfinex?: KeyedSpecificTickers
+}
+
+interface DBTicker {
   id: string
   name: string
   symbol: string
   priceUSD: number
   priceBTC: number
+  bitfinex?: SpecificTicker
+  bittrex?: SpecificTicker
+  binance?: SpecificTicker
+  kraken?: SpecificTicker
 }
 
 // partial interface
@@ -37,16 +54,35 @@ interface CoinmarketcapTicker {
 
 export async function updateTickers() {
   try {
-    const cmcTickers = await fetchCoinmarketcapTickers()
-    const normalizedTickers = cmcTickers.map(ticker => normalizeCoinmarketcapTicker(ticker))
-    const res = await updateTickersWithOwnData(normalizedTickers)
+    const cmcTickers = await getCMCTickers()
+    const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
+
+    const combinedTickers = combineTickers(cmcTickers, {
+      bitfinex: bitfinexTickers,
+    })
+
+    const res = await updateTickersWithOwnData(combinedTickers)
     console.log(res)
   } catch (err) {
     console.log(err)
   }
 }
 
-export async function updateTickersWithOwnData(tickers: Ticker[]) {
+function combineTickers(defaultTickers: DBTicker[], exchangeTickers: ExchangeTickers): DBTicker[] {
+  const { bitfinex } = exchangeTickers
+  return _.map(defaultTickers, t => {
+    const exchangeTicker = bitfinex[t.id]
+    if (exchangeTicker) {
+      t.bitfinex = removeUndefinedValues({
+        priceBTC: exchangeTicker.priceBTC,
+        priceUSD: exchangeTicker.priceUSD,
+      })
+    }
+    return t
+  })
+}
+
+async function updateTickersWithOwnData(tickers: DBTicker[]) {
   const endpoint = 'https://us-central1-shit-coin-portfolio.cloudfunctions.net/updateTickersWithOwnData'
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -58,6 +94,12 @@ export async function updateTickersWithOwnData(tickers: Ticker[]) {
   return await res.text()
 }
 
+async function getCMCTickers(): Promise<DBTicker[]> {
+  const cmcTickers = await fetchCoinmarketcapTickers()
+  const normalizedTickers = cmcTickers.map(ticker => normalizeCoinmarketcapTicker(ticker))
+  return normalizedTickers
+}
+
 async function fetchCoinmarketcapTickers(): Promise<CoinmarketcapTicker[]> {
   const url = 'https://api.coinmarketcap.com/v1/ticker'
   const res = await fetch(url)
@@ -65,7 +107,7 @@ async function fetchCoinmarketcapTickers(): Promise<CoinmarketcapTicker[]> {
   return data
 }
 
-function normalizeCoinmarketcapTicker(ticker: CoinmarketcapTicker): Ticker {
+function normalizeCoinmarketcapTicker(ticker: CoinmarketcapTicker): DBTicker {
   return {
     id: ticker.symbol.toLowerCase(),
     name: ticker.name,
@@ -73,4 +115,8 @@ function normalizeCoinmarketcapTicker(ticker: CoinmarketcapTicker): Ticker {
     priceBTC: parseFloat(ticker.price_btc),
     priceUSD: parseFloat(ticker.price_usd),
   }
+}
+
+function removeUndefinedValues(object) {
+  return _.omitBy(object, _.isUndefined)
 }
