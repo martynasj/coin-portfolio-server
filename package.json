@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/index.ts",
+    "start:remotely": "ts-node src/index.ts",
     "tsnode": "ts-node"
   },
   "author": "",

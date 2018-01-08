@@ -1,11 +1,12 @@
 import * as Tickers from './tickers'
 
 const updateIntervalInMins = 5
-
+console.log('hello')
 setInterval(() => {
-  refetchTickers()
-}, updateIntervalInMins * 60 * 1000)
+  // refetchTickers()
+  console.log('hey')
+}, 2000)
 
-function refetchTickers() {
-  Tickers.updateTickers()
-}
+// function refetchTickers() {
+//   Tickers.updateTickers()
+// }
