@@ -115,5 +115,3 @@ function normalizeTicker(bitfinexTicker: Array<string|number>): NormalizedBitfin
 
   return ticker as NormalizedBitfinexTicker
 }
-
-getPreparedBitfinexTickers()
