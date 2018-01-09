@@ -55,9 +55,15 @@ interface CoinmarketcapTicker {
   price_btc: string
 }
 
-export async function updateTickers() {
+interface Options {
+  limit?: number
+}
+
+export async function updateTickers(options: Options = {}) {
+  const { limit } = options
+
   try {
-    const cmcTickers = await getCMCTickers()
+    const cmcTickers = await getCMCTickers({ limit })
     const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
     const bittrexTickers = await bittrex.getPreparedTickers()
 
@@ -108,14 +114,19 @@ async function updateTickersWithOwnData(tickers: DBTicker[]) {
   return await res.text()
 }
 
-async function getCMCTickers(): Promise<DBTicker[]> {
-  const cmcTickers = await fetchCoinmarketcapTickers()
+interface CmcTickerOptions {
+  limit?: number
+}
+
+async function getCMCTickers(options: CmcTickerOptions = {}): Promise<DBTicker[]> {
+  const { limit } = options
+  const cmcTickers = await fetchCoinmarketcapTickers(limit)
   const normalizedTickers = cmcTickers.map(ticker => normalizeCoinmarketcapTicker(ticker))
   return normalizedTickers
 }
 
-async function fetchCoinmarketcapTickers(): Promise<CoinmarketcapTicker[]> {
-  const url = 'https://api.coinmarketcap.com/v1/ticker'
+async function fetchCoinmarketcapTickers(limit = 100): Promise<CoinmarketcapTicker[]> {
+  const url = `https://api.coinmarketcap.com/v1/ticker?limit=${limit}`
   const res = await fetch(url)
   const data: CoinmarketcapTicker[] = await res.json()
   return data

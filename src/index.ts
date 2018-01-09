@@ -8,7 +8,7 @@ function main() {
 }
 
 function initRefetchingProcess() {
-  Tickers.updateTickers()
+  Tickers.updateTickers({ limit: 500 })
   setInterval(() => {
     Tickers.updateTickers()
   }, updateIntervalInMins * 60 * 1000)
