@@ -6,14 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/index.ts",
-    "start:remotely": "ts-node src/index.ts",
-    "tsnode": "ts-node"
+    "tsnode": "ts-node",
+    "task:update-tickers": "ts-node src/tasks/update-tickers.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/lodash": "^4.14.92",
     "@types/node-fetch": "^1.6.7",
+    "command-line-args": "^4.0.7",
     "lodash": "^4.17.4",
     "node-fetch": "^1.7.3",
     "ts-node": "^4.1.0",
