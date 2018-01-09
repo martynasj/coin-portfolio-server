@@ -4,7 +4,8 @@ const updateIntervalInMins = 10
 
 // Process Starts Here
 function main() {
-  initRefetchingProcess()
+  // initRefetchingProcess()
+  Tickers.updateTickers()
 }
 
 function initRefetchingProcess() {
