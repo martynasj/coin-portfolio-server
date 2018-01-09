@@ -5,7 +5,15 @@ const updateIntervalInMins = 10
 // Process Starts Here
 function main() {
   // initRefetchingProcess()
-  Tickers.updateTickers()
+  Tickers.updateTickers().then(() => {
+    console.log('tickers updated')
+    console.log('exiting')
+    process.exit(0)
+  }).catch(err => {
+    console.log('error: ', err)
+    console.log('exiting')
+    process.exit(1)
+  })
 }
 
 function initRefetchingProcess() {
