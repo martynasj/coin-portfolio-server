@@ -3,6 +3,8 @@ import * as _ from 'lodash'
 import * as T from './types'
 import * as bitfinex from './tickers/bitfinex'
 import * as bittrex from './tickers/bittrex'
+import * as binance from './tickers/binance'
+import * as coinexchange from './tickers/coinexchange'
 
 // const coinmarketcapExampleTicker = {
 //   id: 'raiden-network-token',
@@ -32,6 +34,8 @@ type KeyedSpecificTickers = T.NormalizedTickersKeyed
 type ExchangeTickers = {
   bitfinex?: T.NormalizedTickersKeyed
   bittrex?: T.NormalizedTickersKeyed
+  binance?: T.NormalizedTickersKeyed
+  coinexchange?: T.NormalizedTickersKeyed
 }
 
 interface DBTicker {
@@ -44,6 +48,7 @@ interface DBTicker {
   bittrex?: SpecificTicker
   binance?: SpecificTicker
   kraken?: SpecificTicker
+  coinexchange?: SpecificTicker
 }
 
 // partial interface
@@ -66,10 +71,14 @@ export async function updateTickers(options: Options = {}) {
     const cmcTickers = await getCMCTickers({ limit })
     const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
     const bittrexTickers = await bittrex.getPreparedTickers()
+    const binanceTickers = await binance.getPreparedBinanceTickers()
+    const coinexchangeTickers = await coinexchange.getPreparedCoinexchangeTickers()
 
     const combinedTickers = combineTickers(cmcTickers, {
       bitfinex: bitfinexTickers,
       bittrex: bittrexTickers,
+      binance: binanceTickers,
+      coinexchange: coinexchangeTickers,
     })
 
     const res = await updateTickersWithOwnData(combinedTickers)
@@ -80,11 +89,14 @@ export async function updateTickers(options: Options = {}) {
 }
 
 function combineTickers(defaultTickers: DBTicker[], exchangeTickers: ExchangeTickers): DBTicker[] {
-  const { bitfinex, bittrex } = exchangeTickers
+  const { bitfinex, bittrex, coinexchange, binance } = exchangeTickers
   return _.map(defaultTickers, t => {
     // todo: simplify this
     const bitfinexTicker = bitfinex && bitfinex[t.id]
     const bittrexTicker = bittrex && bittrex[t.id]
+    const binanceTicker = binance && binance[t.id]
+    const coinexchangeTicker = coinexchange && coinexchange[t.id]
+
     if (bitfinexTicker) {
       t.bitfinex = removeUndefinedValues({
         priceBTC: bitfinexTicker.priceBTC,
@@ -96,6 +108,20 @@ function combineTickers(defaultTickers: DBTicker[], exchangeTickers: ExchangeTic
         priceBTC: bittrexTicker.priceBTC,
         priceUSD: bittrexTicker.priceUSD,
         priceETH: bittrexTicker.priceETH,
+      })
+    }
+    if (coinexchangeTicker) {
+      t.coinexchange = removeUndefinedValues({
+        priceBTC: coinexchangeTicker.priceBTC,
+        priceUSD: coinexchangeTicker.priceUSD,
+        priceETH: coinexchangeTicker.priceETH,
+      })
+    }
+    if (binanceTicker) {
+      t.binance = removeUndefinedValues({
+        priceBTC: binanceTicker.priceBTC,
+        priceUSD: binanceTicker.priceUSD,
+        priceETH: binanceTicker.priceETH,
       })
     }
     return t
