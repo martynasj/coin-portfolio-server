@@ -1,6 +1,7 @@
 import * as _ from 'lodash'
 import fetch from 'node-fetch'
 import * as T from '../types'
+import { normalizeTickers } from './utils'
 
 // "MarketName": "BTC-AMP",
 // "High": 0.00006485,
@@ -34,7 +35,7 @@ interface BittrexTicker {
 
 export async function getPreparedTickers(): Promise<T.NormalizedTickersKeyed> {
   const bitfinexTickers = await fetchBittrexTickers()
-  const preparedResult = normalizeTickers(bitfinexTickers)
+  const preparedResult = normalizeTickers(bitfinexTickers, normalizeTicker)
   return preparedResult
 }
 
@@ -44,29 +45,6 @@ async function fetchBittrexTickers(): Promise<BittrexTicker[]> {
   const res = await fetch(`${apiUrl}${endpoint}`)
   const json = await res.json()
   return json.result as BittrexTicker[]
-}
-
-function normalizeTickers(bittrexTickers: BittrexTicker[]): T.NormalizedTickersKeyed {
-  const btc = {}
-  const eth = {}
-  const usd = {}
-
-  bittrexTickers.forEach(t => {
-    const normalized = normalizeTicker(t)
-    if (!normalized) {
-      return
-    }
-    if (normalized.priceBTC) {
-      btc[normalized.symbolId] = normalized
-    } else if (normalized.priceUSD) {
-      usd[normalized.symbolId] = normalized
-    } else {
-      eth[normalized.symbolId] = normalized
-    }
-  })
-
-  const merged = _.merge({}, btc, eth, usd)
-  return merged as T.NormalizedTickersKeyed
 }
 
 function normalizeTicker(bittrexTicker: BittrexTicker): T.NormalizedTicker|null {

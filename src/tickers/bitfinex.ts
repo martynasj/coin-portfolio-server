@@ -70,6 +70,7 @@ async function fetchBitfinexTickers(): Promise<BitfinexTicker[]> {
   return json
 }
 
+// todo: convert to a general normalizer function
 function normalizeResponse(bitfinexTickerArray: BitfinexTicker[]): T.NormalizedTicker[] {
   const result: T.NormalizedTicker[] = []
   const btc = {}
