@@ -38,12 +38,15 @@ type ExchangeTickers = {
   coinexchange?: T.NormalizedTickersKeyed
 }
 
-interface DBTicker {
+interface DefaultDBTicker {
   id: string
   name: string
   symbol: string
   priceUSD: number
   priceBTC: number
+}
+
+interface DBTicker extends DefaultDBTicker {
   bitfinex?: SpecificTicker
   bittrex?: SpecificTicker
   binance?: SpecificTicker
@@ -65,70 +68,51 @@ interface Options {
 }
 
 export async function updateTickers(options: Options = {}) {
-  const { limit } = options
-
   try {
-    const cmcTickers = await getCMCTickers({ limit })
-    const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
-    const bittrexTickers = await bittrex.getPreparedTickers()
-    const binanceTickers = await binance.getPreparedBinanceTickers()
-    const coinexchangeTickers = await coinexchange.getPreparedCoinexchangeTickers()
-
-    const combinedTickers = combineTickers(cmcTickers, {
-      bitfinex: bitfinexTickers,
-      bittrex: bittrexTickers,
-      binance: binanceTickers,
-      coinexchange: coinexchangeTickers,
-    })
-
-    const res = await updateTickersWithOwnData(combinedTickers)
-    console.log(res)
+    const combinedTickers = await collectExchangeTickers(options)
+    const res = await updateFirebaseWithNewData(combinedTickers)
   } catch (err) {
     console.log(err)
   }
 }
 
-function combineTickers(defaultTickers: DBTicker[], exchangeTickers: ExchangeTickers): DBTicker[] {
-  const { bitfinex, bittrex, coinexchange, binance } = exchangeTickers
-  return _.map(defaultTickers, t => {
-    // todo: simplify this
-    const bitfinexTicker = bitfinex && bitfinex[t.id]
-    const bittrexTicker = bittrex && bittrex[t.id]
-    const binanceTicker = binance && binance[t.id]
-    const coinexchangeTicker = coinexchange && coinexchange[t.id]
+async function collectExchangeTickers(options: Options = {}) {
+  const cmcTickers = await getCMCTickers({ limit: options.limit })
+  const bitfinexTickers = await bitfinex.getPreparedBitfinexTickers()
+  const bittrexTickers = await bittrex.getPreparedTickers()
+  const binanceTickers = await binance.getPreparedBinanceTickers()
+  const coinexchangeTickers = await coinexchange.getPreparedCoinexchangeTickers()
 
-    if (bitfinexTicker) {
-      t.bitfinex = removeUndefinedValues({
-        priceBTC: bitfinexTicker.priceBTC,
-        priceUSD: bitfinexTicker.priceUSD,
-      })
-    }
-    if (bittrexTicker) {
-      t.bittrex = removeUndefinedValues({
-        priceBTC: bittrexTicker.priceBTC,
-        priceUSD: bittrexTicker.priceUSD,
-        priceETH: bittrexTicker.priceETH,
-      })
-    }
-    if (coinexchangeTicker) {
-      t.coinexchange = removeUndefinedValues({
-        priceBTC: coinexchangeTicker.priceBTC,
-        priceUSD: coinexchangeTicker.priceUSD,
-        priceETH: coinexchangeTicker.priceETH,
-      })
-    }
-    if (binanceTicker) {
-      t.binance = removeUndefinedValues({
-        priceBTC: binanceTicker.priceBTC,
-        priceUSD: binanceTicker.priceUSD,
-        priceETH: binanceTicker.priceETH,
-      })
-    }
-    return t
+  const combinedTickers = combineTickers(cmcTickers, {
+    bitfinex: bitfinexTickers,
+    bittrex: bittrexTickers,
+    binance: binanceTickers,
+    coinexchange: coinexchangeTickers,
+  })
+
+  return combinedTickers
+}
+
+
+function combineTickers(defaultTickers: DefaultDBTicker[], exchangeTickers: ExchangeTickers): DBTicker[] {
+  const { bitfinex, bittrex, coinexchange, binance } = exchangeTickers
+  return _.map(defaultTickers, defaultTicker => {
+    _.forEach(exchangeTickers, (keyedTickers, exchangeId) => {
+      if (keyedTickers && keyedTickers[defaultTicker.id]) {
+        const exchangeTicker = keyedTickers[defaultTicker.id]
+        defaultTicker[exchangeId] = removeUndefinedValues({
+          priceBTC: exchangeTicker.priceBTC,
+          priceUSD: exchangeTicker.priceUSD,
+          priceETH: exchangeTicker.priceETH,
+        })
+      }
+    })
+    return defaultTicker
   })
 }
 
-async function updateTickersWithOwnData(tickers: DBTicker[]) {
+
+async function updateFirebaseWithNewData(tickers: DBTicker[]) {
   const endpoint = 'https://us-central1-shit-coin-portfolio.cloudfunctions.net/updateTickersWithOwnData'
   const res = await fetch(endpoint, {
     method: 'POST',
@@ -144,7 +128,7 @@ interface CmcTickerOptions {
   limit?: number
 }
 
-async function getCMCTickers(options: CmcTickerOptions = {}): Promise<DBTicker[]> {
+async function getCMCTickers(options: CmcTickerOptions = {}): Promise<DefaultDBTicker[]> {
   const { limit } = options
   const cmcTickers = await fetchCoinmarketcapTickers(limit)
   const normalizedTickers = cmcTickers.map(ticker => normalizeCoinmarketcapTicker(ticker))
@@ -158,7 +142,7 @@ async function fetchCoinmarketcapTickers(limit = 100): Promise<CoinmarketcapTick
   return data
 }
 
-function normalizeCoinmarketcapTicker(ticker: CoinmarketcapTicker): DBTicker {
+function normalizeCoinmarketcapTicker(ticker: CoinmarketcapTicker): DefaultDBTicker {
   return {
     id: ticker.symbol.toLowerCase(),
     name: ticker.name,
