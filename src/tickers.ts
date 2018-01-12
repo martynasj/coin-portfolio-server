@@ -7,6 +7,7 @@ import * as binance from './tickers/binance'
 import * as coinexchange from './tickers/coinexchange'
 import * as cmc from './tickers/cmc'
 import * as poloniex from './tickers/poloniex'
+import * as gdax from './tickers/gdax'
 
 type KeyedSpecificTickers = T.NormalizedTickersKeyed
 
@@ -16,6 +17,7 @@ type ExchangeTickers = {
   binance?: T.NormalizedTickersKeyed
   coinexchange?: T.NormalizedTickersKeyed
   poloniex?: T.NormalizedTickersKeyed
+  gdax?: T.NormalizedTickersKeyed
 }
 
 interface Options {
@@ -38,6 +40,7 @@ async function collectExchangeTickers(options: Options = {}) {
   const binanceTickers = await binance.getPreparedBinanceTickers()
   const coinexchangeTickers = await coinexchange.getPreparedCoinexchangeTickers()
   const poloniexTickers = await poloniex.getPoloniexTickers()
+  const gdaxTickers = await gdax.getGdaxTickers()
 
   const combinedTickers = combineTickers(cmcTickers, {
     bitfinex: bitfinexTickers,
@@ -45,6 +48,7 @@ async function collectExchangeTickers(options: Options = {}) {
     binance: binanceTickers,
     coinexchange: coinexchangeTickers,
     poloniex: poloniexTickers,
+    gdax: gdaxTickers,
   })
 
   return combinedTickers
