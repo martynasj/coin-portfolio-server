@@ -24,14 +24,14 @@ async function fetchBitfinexTickers(): Promise<BinanceTicker[]> {
 
 function normalizeTicker(bittrexTicker: BinanceTicker): T.NormalizedTicker|null {
   const marketName = bittrexTicker.symbol
-  const lastPrice = bittrexTicker.price
+  const lastPrice = parseFloat(bittrexTicker.price)
 
   const isAgainstBTC = /btc$/i.test(marketName)
   const isAgainstUSDT = /usdt$/i.test(marketName)
   const isAgainstETH = /eth$/i.test(marketName)
 
   if (isAgainstBTC || isAgainstETH || isAgainstUSDT) {
-    const ticker: any = {
+    const ticker: T.NormalizedTicker = {
       symbolId: marketName.replace(/(eth|btc|usdt)$/i, '').toLowerCase(),
     }
 
