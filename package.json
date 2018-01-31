@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/index.ts",
     "tsnode": "ts-node",
-    "task:update-tickers": "ts-node src/tasks/update-tickers.ts"
+    "task:update-tickers": "ts-node src/tasks/update-tickers.ts",
+    "deploy": "git push heroku master"
   },
   "author": "",
   "license": "ISC",
