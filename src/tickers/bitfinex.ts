@@ -6,7 +6,7 @@ const url = 'https://api.bitfinex.com/v2'
 const availableSymbols = [
   'btc', 'xrp', 'eth', 'ltc', 'bch', 'iota', 'eos', 'etc', 'neo', 'omg', 'snt',
   'zec', 'xmr', 'dash', 'qtum', 'etp', 'qash', 'btg', 'data', 'yyw', 'gnt', 'san',
-  'edo', 'avt', 'rrt',
+  'edo', 'avt', 'rrt', 'trx',
 ]
 
 // it makes: ['tXRPUSD', 'tXRPBTC', ...]
@@ -17,7 +17,7 @@ function makePairsFromSymbols(symbols: string[]): string[] {
         return ['tBTCUSD']
       } else {
         const uppercased = symbol.toUpperCase()
-        return [`t${uppercased}USD`, `t${uppercased}BTC`]
+        return [`t${uppercased}USD`, `t${uppercased}BTC`, `t${uppercased}ETH`]
       }
     })
     .flatten()
