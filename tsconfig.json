@@ -2,6 +2,7 @@
   "compilerOptions": {
     "lib": ["es6"],
     "module": "commonjs",
+    "allowSyntheticDefaultImports": true,
     "noImplicitReturns": true,
     "outDir": "dist",
     "sourceMap": true,
@@ -9,7 +10,5 @@
     "strictNullChecks": true
   },
   "compileOnSave": true,
-  "include": [
-    "src"
-  ]
+  "include": ["src", "scripts"]
 }
