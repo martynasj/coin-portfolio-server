@@ -1,10 +1,12 @@
-var admin = require("firebase-admin");
+var admin = require('firebase-admin')
 
-var serviceAccount = require("../fb-key.json");
+var serviceAccount = require('../fb-key.json')
 
 export function init() {
-  admin.initializeApp({
+  const config = {
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://shit-coin-portfolio.firebaseio.com"
-  });
+    databaseURL: 'https://shit-coin-portfolio.firebaseio.com',
+    storageBucket: 'shit-coin-portfolio.appspot.com',
+  }
+  admin.initializeApp(config)
 }

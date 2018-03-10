@@ -16,10 +16,13 @@
     "@types/firebase": "^3.2.1",
     "@types/lodash": "^4.14.92",
     "@types/node-fetch": "^1.6.7",
+    "axios": "^0.18.0",
     "command-line-args": "^4.0.7",
     "firebase-admin": "^5.9.1",
+    "jimp": "^0.2.28",
     "lodash": "^4.17.4",
     "node-fetch": "^1.7.3",
+    "rimraf-promise": "^2.0.0",
     "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   },
