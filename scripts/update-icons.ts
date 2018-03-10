@@ -1,12 +1,9 @@
 import axios from 'axios'
 import * as admin from 'firebase-admin'
-import * as firebase from 'firebase'
 import * as _ from 'lodash'
-import * as fs from 'fs'
 import * as path from 'path'
 import * as Jimp from 'jimp'
 const rimraf = require('rimraf-promise')
-const urlData = require('./urls.json')
 import { init } from '../src/firebase'
 
 const projectId = 'shit-coin-portfolio'

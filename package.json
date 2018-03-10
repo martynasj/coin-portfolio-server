@@ -8,6 +8,7 @@
     "start": "ts-node src/index.ts",
     "tsnode": "ts-node",
     "task:update-tickers": "ts-node src/tasks/update-tickers.ts",
+    "task:update-icons": "ts-node scripts/update-icons.ts",
     "deploy": "git push heroku master"
   },
   "author": "",
